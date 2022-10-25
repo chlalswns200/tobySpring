@@ -23,15 +23,14 @@ public class UserDao {
 
             Connection c = connectionMaker.makeConnection();
 
+            PreparedStatement ps = c.prepareStatement("INSERT INTO users(id, name, password) VALUES(?,?,?);");
+            ps.setString(1, user.getId());
+            ps.setString(2, user.getName());
+            ps.setString(3, user.getPassword());
 
-            PreparedStatement pstmt = c.prepareStatement("INSERT INTO users(id, name, password) VALUES(?,?,?);");
-            pstmt.setString(1, user.getId());
-            pstmt.setString(2, user.getName());
-            pstmt.setString(3, user.getPassword());
+            ps.executeUpdate();
 
-            pstmt.executeUpdate();
-
-            pstmt.close();
+            ps.close();
             c.close();
 
         } catch (SQLException e) {
@@ -44,16 +43,16 @@ public class UserDao {
         try {
             c = connectionMaker.makeConnection();
 
-            PreparedStatement pstmt = c.prepareStatement("SELECT * FROM users WHERE id = ?");
-            pstmt.setString(1, id);
+            PreparedStatement ps = c.prepareStatement("SELECT * FROM users WHERE id = ?");
+            ps.setString(1, id);
 
-            ResultSet rs = pstmt.executeQuery();
+            ResultSet rs = ps.executeQuery();
             rs.next();
             User user = new User(rs.getString("id"), rs.getString("name"),
                     rs.getString("password"));
 
             rs.close();
-            pstmt.close();
+            ps.close();
             c.close();
 
             return user;
