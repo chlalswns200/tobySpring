@@ -32,7 +32,7 @@ class UserDaoTest {
 
     @Test
     @DisplayName("addAndGet")
-    void addAndGetTest() {
+    void addAndGetTest() throws SQLException {
         userA = new User("50", "testName", "1234");
         userDao.add(userA);
 

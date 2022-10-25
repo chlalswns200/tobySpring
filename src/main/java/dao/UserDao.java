@@ -2,6 +2,9 @@ package dao;
 
 import dao.connection.AwsConnectionMaker;
 import dao.connection.ConnectionMaker;
+import dao.strategy.AddStrategy;
+import dao.strategy.DeleteAllStrategy;
+import dao.strategy.StatementStrategy;
 import domain.User;
 import org.springframework.dao.EmptyResultDataAccessException;
 
@@ -19,24 +22,35 @@ public class UserDao {
         this.connectionMaker = connectionMaker;
     }
 
-    public void add(User user) {
+    public void jdbcContextWithStatementStrategy(StatementStrategy stmt) throws SQLException {
+        Connection conn = null;
+        PreparedStatement ps = null;
         try {
-
-            Connection c = connectionMaker.makeConnection();
-
-            PreparedStatement ps = c.prepareStatement("INSERT INTO users(id, name, password) VALUES(?,?,?);");
-            ps.setString(1, user.getId());
-            ps.setString(2, user.getName());
-            ps.setString(3, user.getPassword());
-
+            conn = connectionMaker.makeConnection();
+            ps = stmt.makePreparedStatement(conn);
             ps.executeUpdate();
-
-            ps.close();
-            c.close();
-
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            throw e;
+        } finally{
+            if (ps != null) {
+                try {
+                    ps.close();
+                } catch (SQLException e) {
+                }
+            }
+
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                }
+            }
         }
+
+    }
+
+    public void add(User user) throws SQLException {
+        jdbcContextWithStatementStrategy(new AddStrategy(user));
     }
 
     public User findById(String id) {
@@ -70,12 +84,7 @@ public class UserDao {
     }
 
     public void deleteAll() throws SQLException {
-        Connection c = connectionMaker.makeConnection();
-        PreparedStatement ps = c.prepareStatement("delete from users");
-
-        ps.executeUpdate();
-        ps.close();
-        c.close();
+        jdbcContextWithStatementStrategy(new DeleteAllStrategy());
     }
 
     public int getCount() throws SQLException {
